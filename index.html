@@ -54,12 +54,10 @@
   <footer id="foot"></footer>
 </main>
 <script>
-  // The APK is attached to the latest GitHub Release of this same repository
-  // (<org>/<org>.github.io), so derive the org from the hostname and fall back
-  // to a data attribute if a custom domain is ever put in front of it.
+  // The APK is attached to the latest GitHub Release of this repository,
+  // which GitHub Pages serves at lehi31.com/downloads/.
   (function () {
-    var org = document.body.dataset.org || location.hostname.split('.')[0];
-    var repo = org + '/' + org + '.github.io';
+    var repo = 'lehi31/downloads';
     var latest = 'https://github.com/' + repo + '/releases/latest/download/lehi31-callings.apk';
     var btn = document.getElementById('android-btn');
     var meta = document.getElementById('android-meta');
