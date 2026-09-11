@@ -35,7 +35,7 @@
   <section class="card">
     <h2>Android</h2>
     <p>Install directly, no app store needed. Sign in with your lehi31.com account.</p>
-    <a class="btn" id="android-btn" href="#" download>Download for Android</a>
+    <a class="btn" id="android-btn" href="./lehi31-callings.apk" download="lehi31-callings.apk">Download for Android</a>
     <div class="meta" id="android-meta">Checking latest version…</div>
     <ol>
       <li>Open the downloaded file. Android will ask to allow installs from your browser the first time.</li>
@@ -54,14 +54,16 @@
   <footer id="foot"></footer>
 </main>
 <script>
-  // The APK is attached to the latest GitHub Release of this repository,
-  // which GitHub Pages serves at lehi31.com/downloads/.
+  // The APK itself is served straight from this same domain (a committed
+  // file, overwritten each release) so mobile downloads never leave
+  // lehi31.com — GitHub's release-asset CDN lives on a different domain
+  // (release-assets.githubusercontent.com) that some phone DNS filters and
+  // carrier content filters silently stall. Release metadata (version,
+  // size, notes) still comes from the GitHub Release, which is just a JSON
+  // fetch and unaffected by that problem.
   (function () {
     var repo = 'lehi31/downloads';
-    var latest = 'https://github.com/' + repo + '/releases/latest/download/lehi31-callings.apk';
-    var btn = document.getElementById('android-btn');
     var meta = document.getElementById('android-meta');
-    btn.href = latest;
     fetch('https://api.github.com/repos/' + repo + '/releases/latest')
       .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
       .then(function (rel) {
