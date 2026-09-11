@@ -32,27 +32,89 @@
   <h1>Lehi 31 Callings</h1>
   <p class="sub">The bishopric companion app for the callings pipeline on lehi31.com.</p>
 
-  <section class="card">
-    <h2>Android</h2>
-    <p>Install directly, no app store needed. Sign in with your lehi31.com account.</p>
-    <a class="btn" id="android-btn" href="./lehi31-callings.apk" download="lehi31-callings.apk">Download for Android</a>
-    <div class="meta" id="android-meta">Checking latest version…</div>
-    <ol>
-      <li>Open the downloaded file. Android will ask to allow installs from your browser the first time.</li>
-      <li>Sign in, then turn on <strong>Notify me when something needs me</strong> in Settings.</li>
-      <li>Updates: come back here and install the new file over the old one. Your sign-in is kept.</li>
-    </ol>
-  </section>
+  <!-- Hidden until the gate script below decides which one to show, so
+       there's no flash of the download content before the check runs. -->
+  <div id="gate" class="card" style="display:none"></div>
 
-  <section class="card">
-    <h2>iPhone</h2>
-    <p>Not available yet. iPhone installs need an Apple Developer membership, which is still being decided.</p>
-    <p>In the meantime, add <a href="https://lehi31.com/callings/pipeline">lehi31.com</a> to your Home Screen from Safari's share menu to get its notifications.</p>
-    <a class="btn" aria-disabled="true" href="#">Coming later</a>
-  </section>
+  <div id="content" style="display:none">
+    <section class="card">
+      <h2>Android</h2>
+      <p>Install directly, no app store needed. Sign in with your lehi31.com account.</p>
+      <a class="btn" id="android-btn" href="./lehi31-callings.apk" download="lehi31-callings.apk">Download for Android</a>
+      <div class="meta" id="android-meta">Checking latest version…</div>
+      <ol>
+        <li>Open the downloaded file. Android will ask to allow installs from your browser the first time.</li>
+        <li>Sign in, then turn on <strong>Notify me when something needs me</strong> in Settings.</li>
+        <li>Updates: come back here and install the new file over the old one. Your sign-in is kept.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>iPhone</h2>
+      <p>Not available yet. iPhone installs need an Apple Developer membership, which is still being decided.</p>
+      <p>In the meantime, add <a href="https://lehi31.com/callings/pipeline">lehi31.com</a> to your Home Screen from Safari's share menu to get its notifications.</p>
+      <a class="btn" aria-disabled="true" href="#">Coming later</a>
+    </section>
+  </div>
 
   <footer id="foot"></footer>
 </main>
+<script>
+  // This page is served under the same custom domain as the main lehi31.com
+  // app (a GitHub Pages project site sharing the org's Pages root), so it's
+  // the same browser origin and can read the exact localStorage keys that
+  // app's auth writes — no separate login here. This is a UI gate, not a
+  // security boundary: it reads and decodes the JWT client-side without
+  // verifying its signature, the same posture the main app's own client-side
+  // route guards already take (see permission-guard.ts's requireRoot/
+  // requireBishopric). Someone who edits their own localStorage can get
+  // past it; nothing sensitive lives behind it beyond "which build to
+  // download", so that's an acceptable bar here.
+  //
+  // Keep in sync with ROLE_KEY.Bishopric in the lehi31 repo's
+  // src/lib/config/roles.base.ts.
+  var BISHOPRIC_ROLES = [
+    'bishopric-bishop',
+    'bishopric-first-counselor',
+    'bishopric-second-counselor',
+    'bishopric-executive-secretary'
+  ];
+
+  function currentUser() {
+    try {
+      var token = localStorage.getItem('authToken');
+      if (!token || token.split('.').length !== 3) return null;
+      var payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      if (payload.exp && payload.exp * 1000 < Date.now()) return null; // expired
+      var stored = JSON.parse(localStorage.getItem('currentUser') || 'null');
+      return { roles: payload.roles || (stored && stored.roles) || [] };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  var user = currentUser();
+  var isBishopric = !!user && BISHOPRIC_ROLES.some(function (r) { return user.roles.indexOf(r) !== -1; });
+  var gate = document.getElementById('gate');
+  var content = document.getElementById('content');
+
+  if (isBishopric) {
+    content.style.display = '';
+  } else {
+    gate.style.display = '';
+    if (user) {
+      gate.innerHTML =
+        '<h2>Bishopric access only</h2>' +
+        '<p>This page is for the bishopric. Signed in as something else — try a different account, or check with the bishopric if you think this is wrong.</p>' +
+        '<a class="btn" href="https://lehi31.com/home">Back to lehi31.com</a>';
+    } else {
+      gate.innerHTML =
+        '<h2>Sign in required</h2>' +
+        '<p>This page is for the bishopric. Sign in with your lehi31.com account, then come back here.</p>' +
+        '<a class="btn" href="https://lehi31.com/auth/login">Sign in</a>';
+    }
+  }
+</script>
 <script>
   // The APK itself is served straight from this same domain (a committed
   // file, overwritten each release) so mobile downloads never leave
@@ -62,6 +124,7 @@
   // size, notes) still comes from the GitHub Release, which is just a JSON
   // fetch and unaffected by that problem.
   (function () {
+    if (!isBishopric) return;
     var repo = 'lehi31/downloads';
     var meta = document.getElementById('android-meta');
     fetch('https://api.github.com/repos/' + repo + '/releases/latest')
