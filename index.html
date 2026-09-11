@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lehi 31 Callings</title>
+<meta name="robots" content="noindex">
+<style>
+  :root { --ink:#1c2230; --muted:#5b6474; --line:#dfe3ea; --brand:#1f3a5f; --brand-ink:#fff; --bg:#f7f8fb; --card:#fff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink:#e8ecf3; --muted:#a3adbf; --line:#2c3444; --brand:#7ea2d6; --brand-ink:#0d1420; --bg:#0f141c; --card:#161c27; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 560px; margin: 0 auto; padding: 48px 20px 64px; }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 32px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+  .card h2 { font-size: 18px; margin: 0 0 6px; }
+  .card p { margin: 6px 0; color: var(--muted); }
+  .btn { display: inline-block; margin-top: 12px; padding: 12px 18px; border-radius: 10px; background: var(--brand); color: var(--brand-ink); font-weight: 600; text-decoration: none; }
+  .btn[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+  .meta { font-size: 14px; color: var(--muted); margin-top: 10px; }
+  ol { padding-left: 20px; color: var(--muted); }
+  ol li { margin: 4px 0; }
+  code { background: var(--line); padding: 1px 6px; border-radius: 6px; font-size: 14px; }
+  footer { margin-top: 32px; font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Lehi 31 Callings</h1>
+  <p class="sub">The bishopric companion app for the callings pipeline on lehi31.com.</p>
+
+  <section class="card">
+    <h2>Android</h2>
+    <p>Install directly, no app store needed. Sign in with your lehi31.com account.</p>
+    <a class="btn" id="android-btn" href="#" download>Download for Android</a>
+    <div class="meta" id="android-meta">Checking latest version…</div>
+    <ol>
+      <li>Open the downloaded file. Android will ask to allow installs from your browser the first time.</li>
+      <li>Sign in, then turn on <strong>Notify me when something needs me</strong> in Settings.</li>
+      <li>Updates: come back here and install the new file over the old one. Your sign-in is kept.</li>
+    </ol>
+  </section>
+
+  <section class="card">
+    <h2>iPhone</h2>
+    <p>Not available yet. iPhone installs need an Apple Developer membership, which is still being decided.</p>
+    <p>In the meantime, add <a href="https://lehi31.com/callings/pipeline">lehi31.com</a> to your Home Screen from Safari's share menu to get its notifications.</p>
+    <a class="btn" aria-disabled="true" href="#">Coming later</a>
+  </section>
+
+  <footer id="foot"></footer>
+</main>
+<script>
+  // The APK is attached to the latest GitHub Release of this same repository
+  // (<org>/<org>.github.io), so derive the org from the hostname and fall back
+  // to a data attribute if a custom domain is ever put in front of it.
+  (function () {
+    var org = document.body.dataset.org || location.hostname.split('.')[0];
+    var repo = org + '/' + org + '.github.io';
+    var latest = 'https://github.com/' + repo + '/releases/latest/download/lehi31-callings.apk';
+    var btn = document.getElementById('android-btn');
+    var meta = document.getElementById('android-meta');
+    btn.href = latest;
+    fetch('https://api.github.com/repos/' + repo + '/releases/latest')
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (rel) {
+        var apk = (rel.assets || []).filter(function (a) { return /\.apk$/.test(a.name); })[0];
+        var size = apk ? ' · ' + (apk.size / 1048576).toFixed(1) + ' MB' : '';
+        var when = rel.published_at ? new Date(rel.published_at).toLocaleDateString() : '';
+        meta.textContent = 'Version ' + rel.tag_name.replace(/^v/, '') + size + (when ? ' · ' + when : '');
+        if (rel.body) { document.getElementById('foot').textContent = rel.body; }
+      })
+      .catch(function () { meta.textContent = 'Latest version'; });
+  })();
+</script>
+</body>
+</html>
